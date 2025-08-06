@@ -1,73 +1,36 @@
-// // ✅ Example RichTextEditorClient.tsx (must be client component)
+'use client';
 
-// "use client";
+import React, { useEffect, useRef } from 'react';
 
-// import { useEffect, useState } from "react";
-// import dynamic from "next/dynamic";
-// import { EditorContent, useEditor } from "@tiptap/react"; // or your editor lib
-// import StarterKit from "@tiptap/starter-kit";
-
-// export default function RichTextEditorClient({
-//   value,
-//   onChange,
-//   onInit,
-// }: {
-//   value: string;
-//   onChange: (val: string) => void;
-//   onInit?: () => void;
-// }) {
-//   const editor = useEditor({
-//     extensions: [StarterKit],
-//     content: value || "",
-//     onUpdate: ({ editor }) => {
-//       const html = editor.getHTML();
-//       onChange(html);
-//     },
-//   });
-
-//   useEffect(() => {
-//     if (editor && onInit) {
-//       onInit();
-//     }
-//   }, [editor]);
-
-//   return <>{editor && <EditorContent editor={editor} />}</>;
-// }
-
-"use client";
-
-import { useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-
-export default function RichTextEditorClient({
-  value,
-  onChange,
-  onInit,
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  onInit?: () => void;
-}) {
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: value || "",
-    editorProps: {
-      attributes: {
-        class: "min-h-[200px] border rounded-md p-2",
-      },
-    },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      onChange(html);
-    },
-  });
+// Dynamic import inside useEffect to avoid SSR issues
+export default function RichTextEditorClient({ initialContent = '', onChange }: { initialContent?: string, onChange?: (html: string) => void }) {
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const editorInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-    if (editor && onInit) {
-      onInit();
-    }
-  }, [editor]);
+    let makeRichText: any;
 
-  return <>{editor && <EditorContent editor={editor} />}</>;
+    const initEditor = async () => {
+      const mod = await import('rich-text-editor');
+      makeRichText = mod.makeRichText;
+
+      editorInstanceRef.current = makeRichText({
+        container: editorContainerRef.current!,
+        content: initialContent,
+        onChange: (html: string) => {
+          if (onChange) onChange(html);
+        },
+      });
+    };
+
+    initEditor();
+
+    return () => {
+      if (editorInstanceRef.current) {
+        editorInstanceRef.current.destroy?.();
+      }
+    };
+  }, []);
+
+  return <div ref={editorContainerRef} style={{ minHeight: 300, border: '1px solid #ccc', padding: 10 }} />;
 }
