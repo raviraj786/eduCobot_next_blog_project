@@ -4,7 +4,7 @@ import ImgMediaCard from "@/components/ImgMediaCard";
 import Loader from "@/components/Loader";
 import axios from "axios";
 import Blog from "@/types";
-import Link from "next/link";
+
 
 type TabType = "latest" | "recommended";
 
@@ -12,42 +12,37 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>("latest");
   const [latestBlogs, setLatestBlogs] = useState<Blog[]>([]);
   const [recommendedBlogs, setRecommendedBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const LIMIT = 6;
+
+  const fetchBlogs = async (page: number) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/blogs?page=${page}&limit=${LIMIT}`);
+      const data = response.data;
+
+      if (data.success) {
+        setLatestBlogs(data.blogs || []);
+        setTotalPages(Math.ceil(data.total / LIMIT));
+      }
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const startTime = Date.now();
-        const response = await axios.get("/api/blogs/?limit=10");
-        const elapsed = Date.now() - startTime;
-        const delay = Math.max(1500 - elapsed, 0);
-
-        setTimeout(() => {
-          if (response.data?.blogs?.length > 0) {
-            setLatestBlogs(response.data.blogs);
-          } else {
-            setErrorMsg("No blogs found.");
-          }
-          setLoading(false);
-        }, delay);
-      } catch (error: any) {
-        console.error("Error loading blogs", error);
-        setErrorMsg("Failed to fetch blogs. Try again later.");
-        setLoading(false);
-      }
-    };
-
-    fetchBlogs();
-  }, []);
-
-  if (loading) return <Loader />;
-  if (errorMsg)
-    return <div className="text-red-500 text-center">{errorMsg}</div>;
+    fetchBlogs(currentPage);
+  }, [currentPage]);
 
   return (
     <div className="flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-10 space-y-16">
       <div className="w-full max-w-7xl">
+        {/* Tabs */}
         <div className="flex gap-4 mb-6">
           <span
             onClick={() => setActiveTab("latest")}
@@ -71,31 +66,42 @@ export default function Home() {
           </span>
         </div>
 
+        {/* Blog Lists */}
         <Suspense fallback={<Loader />}>
           {activeTab === "latest" && (
             <section className="text-left">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {latestBlogs?.length > 0 ? (
                   latestBlogs.map((blog) => (
-                    <Link
-                      href={`/blogs/${blog.blog_id}`}
+                    <ImgMediaCard
                       key={blog.id}
-                      className="block hover:opacity-90 transition"
-                    >
-                      <ImgMediaCard
-                        title={blog.title}
-                        content={blog.content}
-                        image={blog.image}
-                        tag={blog.tag}
-                        createdAt={blog.createdAt}
-                      />
-                    </Link>
+                      title={blog.title}
+                      content={blog.content}
+                      image={blog.image}
+                      tag={blog.tag}
+                      createdAt={blog.createdAt}
+                    />
                   ))
                 ) : (
-                  <p className="col-span-3 text-center text-gray-500">
-                    No blogs found.
-                  </p>
+                  <p className="col-span-3 text-center text-gray-500">No blogs found.</p>
                 )}
+              </div>
+
+              {/* Pagination */}
+              <div className="mt-10 flex justify-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`px-3 py-1 border rounded ${
+                      currentPage === i + 1
+                        ? "bg-blue-950 text-white"
+                        : "bg-white text-gray-800 hover:bg-gray-100"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
               </div>
             </section>
           )}
@@ -108,24 +114,17 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {recommendedBlogs?.length > 0 ? (
                   recommendedBlogs.map((blog) => (
-                    <Link
-                      href={`/blogs/${blog.blog_id}`}
-                      key={blog._id}
-                      className="block hover:opacity-90 transition"
-                    >
-                      <ImgMediaCard
-                        title={blog.title}
-                        content={blog.content}
-                        image={blog.image}
-                        tag={blog.tag}
-                        createdAt={blog.createdAt}
-                      />
-                    </Link>
+                    <ImgMediaCard
+                      key={`recommended-${blog.id}`}
+                      title={blog.title}
+                      content={blog.content}
+                      image={blog.image}
+                      tag={blog.tag}
+                      createdAt={blog.createdAt}
+                    />
                   ))
                 ) : (
-                  <p className="col-span-3 text-center text-gray-500">
-                    No recommended blogs.
-                  </p>
+                  <p className="col-span-3 text-center text-gray-500">No recommended blogs.</p>
                 )}
               </div>
             </section>
