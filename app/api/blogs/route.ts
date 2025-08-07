@@ -11,6 +11,7 @@ export const config = {
 };
 
 
+//carete blog api
 export async function POST(req: NextRequest) {
   try {
     const conn = await dbconnction();
@@ -24,7 +25,10 @@ export async function POST(req: NextRequest) {
 
     if (!title || !content || !authorName) {
       return NextResponse.json(
-        { success: false, error: "Title, content, and author name are required" },
+        {
+          success: false,
+          error: "Title, content, and author name are required",
+        },
         { status: 400 }
       );
     }
@@ -42,14 +46,16 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ folder: "blogs" }, (err, result) => {
-          if (err || !result) return reject(err);
-          resolve(result as any);
-        })
-        .end(buffer);
-    });
+    const uploadResult = await new Promise<{ secure_url: string }>(
+      (resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "blogs" }, (err, result) => {
+            if (err || !result) return reject(err);
+            resolve(result as any);
+          })
+          .end(buffer);
+      }
+    );
 
     const blog = await Blogs.create({
       blog_id: uuidv4(),
@@ -72,6 +78,7 @@ export async function POST(req: NextRequest) {
 
 
 
+//show blogs
 export async function GET(req: NextRequest) {
   try {
     const conn = await dbconnction();
@@ -86,10 +93,8 @@ export async function GET(req: NextRequest) {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
-
     const totalblogs = await Blogs.countDocuments();
     const totalpage = Math.ceil(totalblogs / limit);
-
     return NextResponse.json({
       success: true,
       page,

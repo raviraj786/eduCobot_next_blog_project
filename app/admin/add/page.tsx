@@ -1,276 +1,219 @@
-// "use client";
-
-// import {
-//   Box,
-//   Button,
-//   TextField,
-//   Typography,
-//   Stack,
-//   Paper,
-// } from "@mui/material";
-// import { useState } from "react";
-// import axios from "axios";
-// import { useRouter } from "next/navigation";
-// import RichTextEditorClient from "@/components/RichTextEditorClient";
-
-// import dynamic from "next/dynamic";
-
-// export default function AddBlogPage() {
-//   const router = useRouter();
-//   const [content, setContent] = useState("");
-//   const [editorReady, setEditorReady] = useState(false);
-
-//   const [formData, setFormData] = useState({
-//     title: "",
-//     tag: "",
-//     authorName: "",
-//     image: null as File | null,
-//   });
-
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0] || null;
-//     setFormData((prev) => ({ ...prev, image: file }));
-//   };
-
-//   const handleSubmit = async () => {
-
-//    console.log(formData , "form data........")
-
-//     const data = new FormData();
-//     data.append("title", formData.title);
-//     data.append("content", content);
-//     data.append("tag", formData.tag);
-//     data.append("authorName", formData.authorName);
-//     if (formData.image) {
-//       data.append("image", formData.image);
-//     }
-
-//     try {
-//       await axios.post("/api/blogs", data);
-//       router.push("/admin");
-//     } catch (err) {
-//       console.error("Error creating blog:", err);
-//       alert("Failed to create blog");
-//     }
-//   };
-
-//   return (
-//     <Box className="p-6 max-w-5xl mx-auto">
-//       <Typography variant="h4" fontWeight="bold" mb={3}>
-//         ✍️ Create New Blog
-//       </Typography>
-
-//       <Paper elevation={3} className="p-6">
-//         <Stack spacing={3}>
-//           <TextField
-//             label="Blog Title"
-//             name="title"
-//             value={formData.title}
-//             onChange={handleChange}
-//             fullWidth
-//           />
-
-//           <TextField
-//             label="Tag"
-//             name="tag"
-//             value={formData.tag}
-//             onChange={handleChange}
-//             fullWidth
-//           />
-
-//           <TextField
-//             label="Author Name"
-//             name="authorName"
-//             value={formData.authorName}
-//             onChange={handleChange}
-//             fullWidth
-//           />
-
-//           <input
-//             type="file"
-//             onChange={handleFileChange}
-//             accept="image/*"
-//           />
-
-//           <Typography variant="h6">Blog Content</Typography>
-
-//            <Box
-//             ref={editorContainerRef}
-//             id="rich-text-editor-root"
-//             sx={{
-//               border: "1px solid #ddd",
-//               borderRadius: "8px",
-//               padding: 2,
-//               backgroundColor: "#fff",
-//               minHeight: "300px",
-//             }}
-//           />
-
-//           <Button
-//             variant="contained"
-//             onClick={handleSubmit}
-
-//           >
-//             Submit Blog
-//           </Button>
-//         </Stack>
-//       </Paper>
-//     </Box>
-//   );
-// }
-
 "use client";
 
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Stack,
-  Paper,
-} from "@mui/material";
-import { useState, useRef, useEffect } from "react";
-import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useMemo, Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
+import axios from "axios";
+import { useSearchParams, useRouter } from "next/navigation";
 
-const RichTextEditorClient = dynamic(
-  () => import("@/components/RichTextEditorClient"),
-  {
-    ssr: false,
-  }
-);
+
+const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
 export default function AddBlogPage() {
+  const editor = useRef(null);
   const router = useRouter();
-  const editorContainerRef = useRef<HTMLDivElement | null>(null);
-  const editorInstanceRef = useRef<any>(null);
+  const searchParams = useSearchParams();
+  const blogId = searchParams.get("id"); 
+  const [title, setTitle] = useState("");
+  const [authorName, setAuthorName] = useState("");
+  const [tag, setTag] = useState("");
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
 
-  const [formData, setFormData] = useState({
-    title: "",
-    tag: "",
-    authorName: "",
-    image: null as File | null,
-  });
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      placeholder: "Write your blog post here...",
+      height: "auto",
+      minHeight: 300,
+      maxHeight: 2000,
+      style: {
+        overflow: "auto",
+        padding: "20px",
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
-    if (!editorContainerRef.current) return;
+    if (blogId) {
+      axios.get(`/api/blogs/${blogId}`).then((res) => {
+        const data = res.data;
+        setTitle(data.title);
+        setAuthorName(data.authorName);
+        setTag(data.tag);
+        setContent(data.content);
+        setImagePreview(data.imageUrl); 
+      });
+    }
+  }, [blogId]);
 
-    // Wait for the DOM to mount, then initialize
-    const { makeRichText } = require("rich-text-editor/dist/rich-text-editor");
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    editorInstanceRef.current = makeRichText({
-      container: editorContainerRef.current,
-      language: "FI",
-      baseUrl: "",
-      allowedFileTypes: ["image/png", "image/jpeg"],
-      onValueChange: () => {},
-      textAreaProps: {
-        id: "blog-editor",
-        className: "editor",
-        editorStyle: {
-          minHeight: "300px",
-          padding: "1rem",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          backgroundColor: "#fff",
-        },
-      },
-    });
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({
-      ...prev,
-      image: file,
-    }));
-  };
-
-  const handleSubmit = async () => {
-    const content = editorInstanceRef.current?.getHTML?.();
-    if (!content || content.trim() === "") {
-      alert("Blog content is required.");
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      setToast({ message: "Only JPG, JPEG, and PNG images are allowed.", type: "error" });
       return;
     }
 
-    const data = new FormData();
-    data.append("title", formData.title);
-    data.append("content", content);
-    data.append("tag", formData.tag);
-    data.append("authorName", formData.authorName);
-    if (formData.image) {
-      data.append("image", formData.image);
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async () => {
+    if (!title || !authorName || !content) {
+      setToast({ message: "Please fill all required fields.", type: "error" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
 
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("authorName", authorName);
+    formData.append("tag", tag);
+    formData.append("content", content);
+    if (image) formData.append("image", image);
+
+    setLoading(true);
+    setToast(null);
+
     try {
-      const res = await axios.post("/api/blogs", data);
-      console.log("Blog created:", res.data);
-      router.push("/admin");
+      let res;
+      if (blogId) {
+        res = await axios.put(`/api/blogs/${blogId}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        res = await axios.post("/api/blogs", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+
+      const data = res.data;
+      if (data.success) {
+        setToast({ message: blogId ? "✅ Blog updated successfully!" : "✅ Blog created successfully!", type: "success" });
+        if (!blogId) resetForm();
+        // router.push("/admin/blogs"); // uncomment if you want to redirect
+      } else {
+        setToast({ message: "Failed to save blog.", type: "error" });
+      }
     } catch (err) {
-      console.error("Error creating blog:", err);
-      alert("Failed to create blog");
+      console.error("Error during submission:", err);
+      setToast({ message: "Error submitting blog.", type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setAuthorName("");
+    setTag("");
+    setContent("");
+    setImage(null);
+    setImagePreview(null);
+  };
+
   return (
-    <Box className="p-6 max-w-5xl mx-auto">
-      <Typography variant="h4" fontWeight="bold" mb={3}>
-        ✍️ Create New Blog
-      </Typography>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4">{blogId ? "✍️ Edit Blog" : "✍️ New Blog"}</h1>
 
-      <Paper elevation={3} className="p-6">
-        <Stack spacing={3}>
-          <TextField
-            label="Blog Title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            fullWidth
-          />
+      {toast && (
+        <div
+          className={`p-3 mb-4 rounded ${
+            toast.type === "error"
+              ? "bg-red-100 text-red-700"
+              : toast.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-blue-100 text-blue-700"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
 
-          <TextField
-            label="Tag"
-            name="tag"
-            value={formData.tag}
-            onChange={handleChange}
-            fullWidth
-          />
+      <input
+        type="text"
+        placeholder="Blog Title"
+        className="w-full p-2 border rounded mb-3"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
 
-          <TextField
-            label="Author Name"
-            name="authorName"
-            value={formData.authorName}
-            onChange={handleChange}
-            fullWidth
-          />
+      <input
+        type="text"
+        placeholder="Author Name"
+        className="w-full p-2 border rounded mb-3"
+        value={authorName}
+        onChange={(e) => setAuthorName(e.target.value)}
+      />
 
-          <input type="file" onChange={handleFileChange} />
+      <input
+        type="text"
+        placeholder="Tags (comma separated)"
+        className="w-full p-2 border rounded mb-3"
+        value={tag}
+        onChange={(e) => setTag(e.target.value)}
+      />
 
-          <Typography variant="h6">Blog Content</Typography>
-          <RichTextEditorClient
-            initialContent=""
-            onChange={handleEditorChange}
-          />
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleImageChange}
+        className="w-full p-2 border rounded mb-1"
+      />
 
-          <Button variant="contained" onClick={handleSubmit}>
-            Submit Blog
-          </Button>
-        </Stack>
-      </Paper>
-    </Box>
+      {!imagePreview && (
+        <p className="text-sm text-red-600 mb-4">Only JPG, JPEG, and PNG images are allowed.</p>
+      )}
+
+      {imagePreview && (
+        <img
+          src={imagePreview}
+          alt="Image Preview"
+          className="max-h-64 rounded border mb-5"
+        />
+      )}
+
+      <Suspense fallback={<div className="text-gray-500 mb-3">Loading editor...</div>}>
+        <JoditEditor
+          ref={editor}
+          value={content}
+          config={config}
+          tabIndex={1}
+          onBlur={(newContent) => setContent(newContent)}
+          onChange={() => {}}
+        />
+      </Suspense>
+
+      <div className="flex items-center gap-4 mt-4">
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          {loading ? (blogId ? "Updating..." : "Submitting...") : blogId ? "Update Blog" : "Submit Blog"}
+        </button>
+
+        <button
+          onClick={resetForm}
+          disabled={loading}
+          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+        >
+          Reset
+        </button>
+
+        <button
+          onClick={() => router.push("/admin/blogs")}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          View All Blogs
+        </button>
+      </div>
+    </div>
   );
 }

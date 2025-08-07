@@ -1,53 +1,33 @@
+"use client";
+
 import Link from "next/link";
 import React from "react";
 
 export default function Header() {
   return (
-    <header className="bg-blue-950 shadow-md">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 py-3 space-y-3 md:space-y-0">
-        {/* Left Menu */}
-        <div className="flex flex-wrap justify-center md:justify-start items-center gap-5">
-          <Link
-            href="/"
-            className="text-[18px] font-bold font-serif text-white"
-          >
+    <header className="bg-blue-950 text-white shadow-md sticky top-0 z-50">
+      <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 py-4 gap-4 md:gap-0">
+       
+        <div className="flex flex-wrap justify-center md:justify-start items-center gap-6">
+          <Link href="/" className="text-2xl font-bold font-serif tracking-wide">
             eduCOBOT
           </Link>
 
-          <Link
-            href="/"
-            className="hover:underline hover:text-red-800 font-serif text-white"
-          >
-            All
-          </Link>
-
-          <Link
-            href="/blogs"
-            className="hover:underline hover:text-red-800 font-serif text-white"
-          >
-            Blogs
-          </Link>
-
-          <Link
-            href="/"
-            className="hover:underline hover:text-red-800 text-white"
-          >
-            Extra
-          </Link>
+          <nav className="flex gap-4 text-base font-medium">
+            <Link href="/" className="hover:text-amber-400 transition">
+              All
+            </Link>
+            <Link href="/blogs" className="hover:text-amber-400 transition">
+              Blogs
+            </Link>
+          </nav>
         </div>
 
-        {/* Right Menu */}
-        <div className="flex flex-wrap justify-center md:justify-end items-center gap-5">
-          <Link
-            href="/about"
-            className="hover:underline hover:text-red-800 font-serif text-white"
-          >
-            About
-          </Link>
-
+        
+        <div className="flex items-center gap-4">
           <Link
             href="/login"
-            className="hover:underline hover:text-red-800 bg-amber-500 text-black px-4 py-1 rounded"
+            className="bg-amber-400 hover:bg-amber-500 text-black font-semibold px-4 py-2 rounded transition"
           >
             Account
           </Link>
