@@ -1,201 +1,242 @@
+// "use client";
+
+// import { useEffect, useState } from "react";
+// import { useParams } from "next/navigation";
+// import { Box, Typography, CircularProgress } from "@mui/material";
+// import BlogContent from "@/components/BlogContent";
+// import { CloseFullscreen } from "@mui/icons-material";
+
+// type Blog = {
+//   title: string;
+//   content: string;
+//   image?: string;
+//   authorName: string;
+//   createdAt?: string;
+//   tag?: string[];
+// };
+
+// export default function BlogEditpage() {
+//   const { id } = useParams();
+
+//   console.log("Ssssssssssssssssss" , id)
+//   const blog_id = id;
+
+//   const [blog, setBlog] = useState<Blog | null>(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     if (!blog_id) return;
+//     const fetchBlog = async () => {
+//       try {
+//          console.log(blog_id);
+//         const res = await fetch(`/api/blogs/${blog_id}`);
+//         const data = await res.json();
+//          console.log(data, "data find....");
+
+//         if (data.success && data.blog) {
+//           setBlog(data.blog);
+//         } else {
+//           console.error("Blog not found in API response.");
+//         }
+//       } catch (error) {
+//         console.error("Error fetching blog:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchBlog();
+//   }, [id]);
+
+//   if (loading) {
+//     return (
+//       <Box className="flex justify-center items-center h-screen">
+//         <CircularProgress />
+//       </Box>
+//     );
+//   }
+
+//   if (!blog) {
+//     return (
+//       <Box className="text-center mt-10">
+//         <Typography variant="h5">Blog not found</Typography>
+//       </Box>
+//     );
+//   }
+
+//   return <BlogContent blog={blog} blog_id={id} />;
+// }
+
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Box,
-  Button,
-  TextField,
   Typography,
-  Stack,
-  Paper,
+  CircularProgress,
+  TextField,
+  Button,
 } from "@mui/material";
-import { useEffect, useRef, useState, Suspense } from "react";
-import axios from "axios";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import axios from "axios";
 
+// Load JoditEditor only on client side
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
-export default function EditBlogPage() {
-  const router = useRouter();
+export default function BlogEditPage() {
   const { id } = useParams();
-  const editor = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
+  const router = useRouter();
 
   const [title, setTitle] = useState("");
-  const [tag, setTag] = useState("");
-  const [authorName, setAuthorName] = useState("");
   const [content, setContent] = useState("");
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [authorName, setAuthorName] = useState("");
+  const [tag, setTag] = useState("");
+  const [image, setImage] = useState("");
+  const [loading, setLoading] = useState(true);
 
+  // Fetch blog by ID
   useEffect(() => {
+    if (!id) return;
+
     const fetchBlog = async () => {
       try {
+        console.log("Fetching blog for ID:", id);
         const res = await axios.get(`/api/blogs/${id}`);
-        const blog = res.data;
+        const blog = res.data.blog;
 
-        console.log(blog  , "Ddddd")
-
-        setTitle(blog.title);
-        setTag(blog.tag);
-        setAuthorName(blog.authorName);
-        setContent(blog.content);
-        setImagePreview(blog.imageUrl);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setToast({ type: "error", message: "Failed to load blog." });
+        setTitle(blog.title || "");
+        setContent(blog.content || "");
+        setAuthorName(blog.authorName || "");
+        setTag((blog.tag || []).join(", "));
+        setImage(blog.image || "");
+      } catch (error) {
+        console.error("Failed to load blog:", error);
+        alert("Failed to load blog.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (id) fetchBlog();
+    fetchBlog();
   }, [id]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file && ["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    } else {
-      setToast({ type: "error", message: "Only JPG, JPEG, and PNG files allowed." });
-      setImage(null);
-      setImagePreview(null);
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleSubmit = async () => {
-    setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("tag", tag);
-      formData.append("authorName", authorName);
-      formData.append("content", content);
-      if (image) formData.append("image", image);
+      const body = {
+        title,
+        content,
+        authorName,
+        tag: tag.split(",").map((t) => t.trim()),
+        image,
+      };
 
-      const res = await axios.put(`/api/blogs/${id}`, formData);
-      setToast({ type: "success", message: "Blog updated successfully!" });
-      setTimeout(() => router.push("/admin/blogs"), 1000);
-    } catch (err) {
-      console.error("Update error:", err);
-      setToast({ type: "error", message: "Failed to update blog." });
+      const res = await axios.put(`/api/blogs/${id}`, body);
+
+      console.log(res.data, "Dddddddddddddddddddddddd");
+
+      if (res.data.success) {
+        alert("Blog updated successfully!");
+        router.push("/admin");
+      } else {
+        alert("Update failed.");
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      alert("Error updating blog.");
     }
-    setLoading(false);
   };
 
-  const resetForm = () => {
-    setTitle("");
-    setTag("");
-    setAuthorName("");
-    setContent("");
-    setImage(null);
-    setImagePreview(null);
-    setToast(null);
-  };
-
-  const config = {
-    readonly: false,
-    height: 400,
-  };
+  if (loading) {
+    return (
+      <Box className="flex justify-center items-center h-screen">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">✍️ Edit Blog</h1>
+    <Box className="max-w-7xl mx-auto mt-10 p-6 shadow-md bg-white rounded-lg space-y-6 m-10 ">
+      <Typography variant="h5" fontWeight="bold" sx={{ textAlign: "center" }}>
+        Edit Blog
+      </Typography>
 
-      {toast && (
-        <div
-          className={`p-3 mb-4 rounded ${
-            toast.type === "error"
-              ? "bg-red-100 text-red-700"
-              : toast.type === "success"
-              ? "bg-green-100 text-green-700"
-              : "bg-blue-100 text-blue-700"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
-
-      <input
-        type="text"
-        placeholder="Blog Title"
-        className="w-full p-2 border rounded mb-3"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Author Name"
-        className="w-full p-2 border rounded mb-3"
-        value={authorName}
-        onChange={(e) => setAuthorName(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Tags (comma separated)"
-        className="w-full p-2 border rounded mb-3"
-        value={tag}
-        onChange={(e) => setTag(e.target.value)}
-      />
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleImageChange}
-        className="w-full p-2 border rounded mb-1"
-      />
-
-      {!imagePreview && (
-        <p className="text-sm text-red-600 mb-4">
-          Only JPG, JPEG, and PNG images are allowed.
-        </p>
-      )}
-
-      {imagePreview && (
-        <img
-          src={imagePreview}
-          alt="Image Preview"
-          className="max-h-64 rounded border mb-5"
+      <form onSubmit={handleSubmit} className="space-y-4 m-5  ">
+        <TextField
+          fullWidth
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          sx={{ marginBlock: 4 }}
         />
-      )}
 
-      <Suspense fallback={<div className="text-gray-500 mb-3">Loading editor...</div>}>
-        <JoditEditor
-          ref={editor}
-          value={content}
-          config={config}
-          tabIndex={1}
-          onBlur={(newContent) => setContent(newContent)}
-          onChange={() => {}}
+        <TextField
+          fullWidth
+          label="Tags (comma-separated)"
+          value={tag}
+          onChange={(e) => setTag(e.target.value)}
+          sx={{ marginBlock: 4 }}
         />
-      </Suspense>
 
-      <div className="flex items-center gap-4 mt-4">
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          {loading ? "Updating..." : "Update Blog"}
-        </button>
+        <TextField
+          fullWidth
+          label="Author Name"
+          value={authorName}
+          onChange={(e) => setAuthorName(e.target.value)}
+          sx={{ marginBlock: 4 }}
+        />
 
-        <button
-          onClick={resetForm}
-          disabled={loading}
-          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-        >
-          Reset
-        </button>
+        <TextField
+          fullWidth
+          label="Image URL"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+          sx={{ marginBlock: 4 }}
+        />
 
-        <button
-          onClick={() => router.push("/admin/blogs")}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        {image && (
+          <Box className="space-y-2">
+            <img
+              src={image}
+              alt="Preview"
+              className="w-full max-h-60 object-cover rounded"
+            />
+
+            <Box className="flex gap-4">
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => setImage("")}
+              >
+                Delete Image
+              </Button>
+
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  const newUrl = prompt("Enter new image URL:", image);
+                  if (newUrl !== null) setImage(newUrl.trim());
+                }}
+              >
+                Replace Image
+              </Button>
+            </Box>
+          </Box>
+        )}
+
+        <JoditEditor value={content} onChange={setContent} />
+
+        <Button
+          type="submit"
+          variant="contained"
+          className="w-full mt-6 mb-6 bg-blue-950 "
         >
-          View All Blogs
-        </button>
-      </div>
-    </div>
+          Update Blog
+        </Button>
+      </form>
+    </Box>
   );
 }

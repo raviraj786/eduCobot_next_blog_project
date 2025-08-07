@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const limit = parseInt(searchParams.get("limit") || "6", 6);
 
     const blogs = await Blogs.find().sort({ createdAt: -1 }).limit(limit);
 

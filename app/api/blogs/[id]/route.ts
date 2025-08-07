@@ -1,8 +1,7 @@
 import { dbconnction } from "@/lib/db";
 import Blogs from "@/models/blog";
+import { CloseFullscreen } from "@mui/icons-material";
 import { NextRequest, NextResponse } from "next/server";
-
-
 
 //find  single blog id
 export async function GET(
@@ -22,7 +21,7 @@ export async function GET(
       );
     }
 
-    const blog = await Blogs.findOne({ blog_id : id });
+    const blog = await Blogs.findOne({ blog_id: id });
 
     if (!blog) {
       return NextResponse.json(
@@ -41,53 +40,31 @@ export async function GET(
   }
 }
 
-
-
-
-
+//update apis
 export async function PUT(
-  req: NextRequest,
-  { params }: { params: { blog_id: string } }
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-     const conn = dbconnction()
-     console.log(conn , "db connted")
-     
-    const { blog_id } = params;
-    console.log(blog_id , "id")
+    const id = params.id;
+    const body = await req.json();
 
-    if (!isValidObjectId(blog_id)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid blog ID" },
-        { status: 400 }
-      );
-    }
+    console.log(id, body, "sssss");
 
-    const data = await req.json();
-
-    // Optional: add schema-level validation here
-
-    const updated = await Blogs.findByIdAndUpdate(blog_id, data, {
+    const updatedBlog = await Blogs.findOneAndUpdate({ blog_id: id }, body, {
       new: true,
     });
 
-    if (!updated) {
+    if (!updatedBlog) {
       return NextResponse.json(
         { success: false, message: "Blog not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Blog updated successfully",
-        blog: updated,
-      },
-      { status: 200 }
-    );
-  } catch (error: any) {
-    console.error("PUT /blogs/:id error:", error.message);
+    return NextResponse.json({ success: true, blog: updatedBlog });
+  } catch (error) {
+    console.error("Error updating blog:", error);
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 }
@@ -95,44 +72,35 @@ export async function PUT(
   }
 }
 
+//  DELETE
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await dbconnction();
+    const { id } = params;
 
+    console.log(id, "is");
 
+    const deleted = await Blogs.findOneAndDelete({ blog_id: id });
 
+    if (!deleted) {
+      return NextResponse.json(
+        { success: false, message: "Blog not found" },
+        { status: 404 }
+      );
+    }
 
-// // ✅ DELETE: Delete blog by ID
-// export async function DELETE(
-//   req: NextRequest,
-//   { params }: { params: { blog_id: string } }
-// ) {
-//   try {
-//     await dbConnection();
-//     const { blog_id } = params;
-
-//     if (!isValidObjectId(blog_id)) {
-//       return NextResponse.json(
-//         { success: false, message: "Invalid blog ID" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const deleted = await Blogs.findByIdAndDelete(blog_id);
-
-//     if (!deleted) {
-//       return NextResponse.json(
-//         { success: false, message: "Blog not found" },
-//         { status: 404 }
-//       );
-//     }
-
-//     return NextResponse.json(
-//       { success: true, message: "Blog deleted successfully" },
-//       { status: 200 }
-//     );
-//   } catch (error: any) {
-//     console.error("DELETE /blogs/:id error:", error.message);
-//     return NextResponse.json(
-//       { success: false, message: "Server error" },
-//       { status: 500 }
-//     );
-//   }
-// }
+    return NextResponse.json(
+      { success: true, message: "Blog deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("DELETE /blogs/:id error:", error.message);
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 }
+    );
+  }
+}
