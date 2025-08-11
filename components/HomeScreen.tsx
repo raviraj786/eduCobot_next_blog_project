@@ -19,7 +19,7 @@ export default function HomeScreen() {
     const fetchBlogs = async () => {
       try {
         const startTime = Date.now();
-        const response = await axios.get("/api/blogs/?limit=10");
+        const response = await axios.get("/api/blogs/latest?limit=6");
         const elapsed = Date.now() - startTime;
         const delay = Math.max(1500 - elapsed, 0);
 

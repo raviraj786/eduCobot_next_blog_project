@@ -1,12 +1,14 @@
 import * as React from "react";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import { CardActionArea } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  CardActionArea,
+} from "@mui/material";
+import DOMPurify from "dompurify";
 import Props from "@/types/index";
+import { format } from "date-fns";
 
 export default function ImgMediaCard({
   id,
@@ -16,45 +18,84 @@ export default function ImgMediaCard({
   tag,
   createdAt,
 }: Props) {
-  return (
+  const cleanContent = DOMPurify.sanitize(content || "");
+  const formattedDate = createdAt
+    ? format(new Date(createdAt), "MMMM d, yyyy • h:mm a")
+    : "Unknown Date";
 
+  return (
     <Card
       sx={{
-        maxWidth: 345,
-        margin: 2,
-        cursor: "pointer",
-        backgroundColor: "#f1f1f1",
+        width: "80%",
+        height: 480,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        borderRadius: 3,
+        overflow: "hidden",
+        backgroundColor: "#ffffff",
+        boxShadow: 4,
+        // margin removed here to prevent overflow
       }}
     >
-      <CardMedia component="img" alt={title} height="140" image={image} />
-      <CardContent>
+      <CardMedia
+        component="img"
+        alt={title}
+        height="300"
+        image={image || "/fallback.jpg"}
+        sx={{
+          width: "100%",
+          height: "300px",
+          objectFit: "cover",
+          objectPosition: "center",
+        }}
+      />
+
+      <CardContent sx={{ px: 3, py: 2, flex: "1 1 auto" }}>
         <Typography
-          gutterBottom
           variant="h6"
-          component="div"
-          sx={{ fontSize: 17, fontWeight: "700", fontFamily: "serif" }}
+          sx={{
+            fontWeight: "bold",
+            fontSize: "1.2rem",
+            fontFamily: "Georgia, serif",
+            mb: 1,
+            lineHeight: 1.3,
+            height: "3em",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
         >
-         {title?.slice(0, 100)} 
+    {(title?.slice(0, 60) || "Untitled Blog")}
         </Typography>
+
         <Typography
-          variant="body2"
-          height="50"
-          sx={{ color: "#9f9d9a", fontSize: 18, fontFamily: "serif" }}
+          style={{
+            maxHeight: "90px",
+            overflow: "auto",
+            fontSize: "14px",
+            color: "#444",
+            fontFamily: "Georgia, serif",
+            lineHeight: "1.5em",
+          }}
         >
-          {content?.slice(0, 150)}...
+          VIEW THESE RESOURCES
         </Typography>
       </CardContent>
+
       <CardActionArea>
-        <div className="px-4 pt-2 pb-3">
-          {/* {tag.map((item, i) => (
-            <span
-              key={i}
-              className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2 font-serif "
-            >
-              #{item}
-            </span>
-          ))} */}
-          <p className="text-sm text-gray-500 mt-2 font-serif ">📅 {createdAt}</p>
+        <div className="px-4 pb-4">
+          <div className="flex flex-wrap mb-2">
+            {tag?.map((item, i) => (
+              <span
+                key={i}
+                className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold mr-2 mb-2"
+              >
+                #{item}
+              </span>
+            ))}
+          </div>
+
+          <p className="text-sm text-gray-600 font-serif">📅 {formattedDate}</p>
         </div>
       </CardActionArea>
     </Card>

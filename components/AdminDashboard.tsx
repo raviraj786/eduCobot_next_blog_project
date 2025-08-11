@@ -4,160 +4,134 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  IconButton,
+  Pagination,
   Button,
+  CardActions,
   CircularProgress,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import EditNoteIcon from "@mui/icons-material/EditNote";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import AddIcon from "@mui/icons-material/Add";
-import { useRouter } from "next/navigation";
+import ImgMediaCard from "@/components/ImgMediaCard";
 import axios from "axios";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export default function AdminDashboard() {
-  const router = useRouter();
+export default function AdminDeshboard() {
   const [blogs, setBlogs] = useState([]);
-  const [totalBlogs, setTotalBlogs] = useState(0);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(6);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const fetchBlogs = async (page: number, pageSize: number) => {
+  const router = useRouter();
+
+  const fetchBlogs = async (page = 1) => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `/api/blogs?page=${page + 1}&limit=${pageSize}`
-      );
-      const formatted = res.data.blogs.map((blog) => ({
-        id: blog._id,
-        blog_id: blog._id,
-        title: blog.title,
-        content: blog.content?.replace(/<[^>]+>/g, "").slice(0, 100),
-        image: blog.image,
-        author: blog.authorName,
-        tag: blog.tag,
-        createdAt: new Date(blog.createdAt).toLocaleString(),
-      }));
-      setBlogs(formatted);
-      setTotalBlogs(res.data.totalblogs);
-    } catch (error) {
-      console.error("Fetch error:", error);
-      alert("Failed to load blogs. Please try again later.");
+      const res = await axios.get(`/api/blogs?page=${page}&limit=6`);
+      if (res.data.success) {
+        setBlogs(res.data.blogs);
+        setPage(res.data.page);
+        setTotalPages(res.data.totalpage);
+      }
+    } catch (err) {
+      console.error("Error fetching blogs", err);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchBlogs(page, pageSize);
-  }, [page, pageSize]);
+    fetchBlogs(page);
+  }, [page]);
+
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/admin/edit/${id}`);
+  };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this blog?")) {
-      try {
-        await axios.delete(`/api/blogs/${id}`);
-        fetchBlogs(page, pageSize);
-      } catch (error) {
-        console.error("Delete error:", error);
-        alert("Error deleting blog.");
-      }
+    const confirm = window.confirm(
+      `Are you sure you want to delete this blog? ${id}`
+    );
+
+    console.log(id , "Ddddddddddd")
+
+
+
+    if (!confirm) return;
+    try {
+      await axios.delete(`/api/blogs/${id}`);
+      alert("data deleted")
+      fetchBlogs(page); 
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Failed to delete blog.");
     }
   };
 
-  const handleAdd = () => {
-    router.push("/admin/add");
-  };
-
-  const handleEdit = (row) => {
-    
-    router.push(`/admin/edit/${row.id}`);
-
-  };
-
-  const columns = [
-    {
-      field: "image",
-      headerName: "Image",
-      width: 100,
-      renderCell: (params) => (
-        <img
-          src={params.value}
-          alt="Blog Image"
-          style={{ width: 50, height: 50, borderRadius: 4 }}
-        />
-      ),
-    },
-    { field: "title", headerName: "Title", width: 200 },
-    { field: "content", headerName: "Content", width: 300 },
-    { field: "author", headerName: "Author", width: 150 },
-    { field: "tag", headerName: "Tag", width: 120 },
-    { field: "createdAt", headerName: "Created At", width: 180 },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 130,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <>
-          <IconButton color="primary" onClick={() => handleEdit(params.row)}>
-            <EditNoteIcon />
-          </IconButton>
-          <IconButton color="error" onClick={() => handleDelete(params.row.id)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </>
-      ),
-    },
-  ];
+ 
 
   return (
-    <Box className="flex  ">
-      <Box className="flex-1 p-4" sx={{}}>
-        <Box className="flex justify-between items-center mb-4">
-          <Typography variant="h5" fontWeight="bold">
-            Blog Management
-          </Typography>
-          <Button sx={{ bgcolor: "blue", color: "#ffff" }} onClick={handleAdd}>
-            add-blog
-          </Button>
-        </Box>
+    <Box className="flex flex-col  items-center justify-center px-2 md:px-4 lg:px-8 py-5 space-y-8">
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        <>
+          <section className="flex flex-wrap justify-center gap-6 w-full">
+            {blogs.length > 0 ? (
+              blogs.map((blog, i) => (
+                <Box
+                  key={`blog-${i}`}
+                 className="w-full  sm:w-1/3  md:w-1/3 lg:w-1/3 "
+                >
+                  <Link
+                    href={`/blogs/${blog.blog_id}`}
+                    className="block hover:opacity-90 transition"
+                  >
+                    <ImgMediaCard {...blog} />
+                  </Link>
+                  <CardActions className="">
+                    <Button
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      onClick={() => handleEdit(blog.blog_id)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      onClick={() => handleDelete(blog.blog_id)}
+                    >
+                      Delete
+                    </Button>
+                  </CardActions>
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body1" className="col-span-3 text-center">
+                No blogs found.
+              </Typography>
+            )}
+          </section>
 
-        {loading ? (
-          <Box className="flex justify-center p-10">
-            <CircularProgress />
+          <Box className="flex justify-center mt-10">
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              shape="rounded"
+            />
           </Box>
-        ) : (
-          <DataGrid
-            rows={blogs}
-            columns={columns}
-            pagination
-            page={page}
-            pageSize={pageSize}
-            rowCount={totalBlogs}
-            paginationMode="server"
-            onPageChange={(newPage) => setPage(newPage)}
-            onPageSizeChange={(newSize) => {
-              setPageSize(newSize);
-              setPage(0);
-            }}
-            loading={loading}
-            rowsPerPageOptions={[6, 10, 20]}
-            autoHeight
-            sx={{
-              boxShadow: 2,
-              borderRadius: 2,
-              bgcolor: "background.paper",
-            }}
-          />
-        )}
-      </Box>
+        </>
+      )}
     </Box>
   );
 }

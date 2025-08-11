@@ -16,6 +16,8 @@ type Blog = {
 
 export default function BlogDetailPage() {
   const { id } = useParams();
+
+
   const blog_id = id;
 
   const [blog, setBlog] = useState<Blog | null>(null);

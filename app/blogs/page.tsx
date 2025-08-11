@@ -28,7 +28,10 @@ export default function BlogListingPage() {
     fetchBlogs(page);
   }, [page]);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
     setPage(value);
   };
 
@@ -38,11 +41,11 @@ export default function BlogListingPage() {
         {blogs.length > 0 ? (
           blogs.map((blog, i) => (
             <Link
-                      href={`/blogs/${blog.blog_id}`}
-                      key={blog.id}
-                      className="block hover:opacity-90 transition"
-                    >
-            <ImgMediaCard key={`blog-${i}`} {...blog} />
+              href={`/blogs/${blog.blog_id}`}
+              key={blog.id}
+              className="block hover:opacity-90 transition"
+            >
+              <ImgMediaCard key={`blog-${i}`} {...blog} />
             </Link>
           ))
         ) : (
