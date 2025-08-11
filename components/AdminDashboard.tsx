@@ -75,25 +75,25 @@ export default function AdminDeshboard() {
  
 
   return (
-    <Box className="flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-10 space-y-16">
+    <Box className="flex flex-col  items-center justify-center px-2 md:px-4 lg:px-8 py-5 space-y-8">
       {loading ? (
         <CircularProgress />
       ) : (
         <>
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <section className="flex flex-wrap justify-center gap-6 w-full">
             {blogs.length > 0 ? (
               blogs.map((blog, i) => (
                 <Box
                   key={`blog-${i}`}
-                  className="border rounded-lg overflow-hidden shadow-md transition hover:shadow-lg"
+                 className="w-full  sm:w-1/3  md:w-1/3 lg:w-1/3 "
                 >
                   <Link
-                    href={`/blogs/${blog._id}`}
+                    href={`/blogs/${blog.blog_id}`}
                     className="block hover:opacity-90 transition"
                   >
                     <ImgMediaCard {...blog} />
                   </Link>
-                  <CardActions className="flex justify-between p-3">
+                  <CardActions className="">
                     <Button
                       size="small"
                       color="primary"

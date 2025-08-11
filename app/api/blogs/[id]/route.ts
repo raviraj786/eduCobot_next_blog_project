@@ -1,6 +1,5 @@
 import { dbconnction } from "@/lib/db";
 import Blogs from "@/models/blog";
-import { CloseFullscreen } from "@mui/icons-material";
 import { NextRequest, NextResponse } from "next/server";
 
 //find  single blog id
@@ -13,6 +12,7 @@ export async function GET(
     console.log("MongoDB connected:", conn?.connection?.readyState);
 
     const { id } = params;
+    // console.log(id , "idddddddddddddddddddd")
 
     if (!id || typeof id !== "string") {
       return NextResponse.json(
@@ -40,6 +40,8 @@ export async function GET(
   }
 }
 
+
+
 //update apis
 export async function PUT(
   req: Request,
@@ -48,13 +50,9 @@ export async function PUT(
   try {
     const id = params.id;
     const body = await req.json();
-
-    console.log(id, body, "sssss");
-
     const updatedBlog = await Blogs.findOneAndUpdate({ blog_id: id }, body, {
       new: true,
     });
-
     if (!updatedBlog) {
       return NextResponse.json(
         { success: false, message: "Blog not found" },
@@ -71,6 +69,9 @@ export async function PUT(
     );
   }
 }
+
+
+
 
 //  DELETE
 export async function DELETE(

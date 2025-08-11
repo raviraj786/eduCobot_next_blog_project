@@ -23,13 +23,10 @@ export default function ImgMediaCard({
     ? format(new Date(createdAt), "MMMM d, yyyy • h:mm a")
     : "Unknown Date";
 
-
-    console.log(content , "Ddddddd")
-
   return (
     <Card
       sx={{
-        width: 360,
+        width: "80%",
         height: 480,
         display: "flex",
         flexDirection: "column",
@@ -38,19 +35,23 @@ export default function ImgMediaCard({
         overflow: "hidden",
         backgroundColor: "#ffffff",
         boxShadow: 4,
-        margin: 2,
+        // margin removed here to prevent overflow
       }}
     >
       <CardMedia
         component="img"
         alt={title}
-        height="160"
+        height="300"
         image={image || "/fallback.jpg"}
-        sx={{ objectFit: "cover" }}
+        sx={{
+          width: "100%",
+          height: "300px",
+          objectFit: "cover",
+          objectPosition: "center",
+        }}
       />
 
       <CardContent sx={{ px: 3, py: 2, flex: "1 1 auto" }}>
-        {/* Title */}
         <Typography
           variant="h6"
           sx={{
@@ -64,23 +65,25 @@ export default function ImgMediaCard({
             textOverflow: "ellipsis",
           }}
         >
-          {title || "Untitled Blog"}
+    {(title?.slice(0, 60) || "Untitled Blog")}
         </Typography>
 
-       
-      <Typography  style={{
+        <Typography
+          style={{
             maxHeight: "90px",
             overflow: "auto",
             fontSize: "14px",
             color: "#444",
             fontFamily: "Georgia, serif",
             lineHeight: "1.5em",
-          }}>VIEW THESE RESOURCES</Typography>
+          }}
+        >
+          VIEW THESE RESOURCES
+        </Typography>
       </CardContent>
 
       <CardActionArea>
         <div className="px-4 pb-4">
-          {/* Tags */}
           <div className="flex flex-wrap mb-2">
             {tag?.map((item, i) => (
               <span
@@ -92,7 +95,6 @@ export default function ImgMediaCard({
             ))}
           </div>
 
-          {/* Date */}
           <p className="text-sm text-gray-600 font-serif">📅 {formattedDate}</p>
         </div>
       </CardActionArea>
