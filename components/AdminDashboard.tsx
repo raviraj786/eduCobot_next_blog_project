@@ -49,6 +49,7 @@ export default function AdminDeshboard() {
   };
 
   const handleEdit = (id: string) => {
+    setLoading(true)
     router.push(`/admin/edit/${id}`);
   };
 
@@ -56,23 +57,30 @@ export default function AdminDeshboard() {
     const confirm = window.confirm(
       `Are you sure you want to delete this blog? ${id}`
     );
-
-    console.log(id , "Ddddddddddd")
-
-
-
+    // console.log(id, "Ddddddddddd");
     if (!confirm) return;
     try {
       await axios.delete(`/api/blogs/${id}`);
-      alert("data deleted")
-      fetchBlogs(page); 
+      alert("data deleted");
+      fetchBlogs(page);
     } catch (error) {
       console.error("Delete error:", error);
       alert("Failed to delete blog.");
     }
   };
 
- 
+
+
+
+  if(loading){
+     <CircularProgress />
+  }
+
+
+
+
+
+
 
   return (
     <Box className="flex flex-col  items-center justify-center px-2 md:px-4 lg:px-8 py-5 space-y-8">
@@ -85,7 +93,7 @@ export default function AdminDeshboard() {
               blogs.map((blog, i) => (
                 <Box
                   key={`blog-${i}`}
-                 className="w-full  sm:w-1/3  md:w-1/3 lg:w-1/3 "
+                  className="w-full  sm:w-1/3  md:w-1/3 lg:w-1/3 "
                 >
                   <Link
                     href={`/blogs/${blog.blog_id}`}

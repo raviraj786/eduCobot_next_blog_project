@@ -1,13 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setIsLoggedIn } = useContext(AuthContext);
+  const { isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
   const [admin, setAdmin] = useState({ email: "", password: "" });
+
+ 
+  useEffect(() => {
+    if (isLoggedIn) {
+      router.replace("/admin"); 
+    }
+  }, [isLoggedIn, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
