@@ -92,7 +92,9 @@ export async function GET(req: NextRequest) {
     const blogs = await Blogs.find()
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ updatedAt: -1  })
+      // .sort({ createdAt: -1 });
+      
     const totalblogs = await Blogs.countDocuments();
     const totalpage = Math.ceil(totalblogs / limit);
     return NextResponse.json({

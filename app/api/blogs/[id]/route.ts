@@ -1,6 +1,8 @@
 import { dbconnction } from "@/lib/db";
 import Blogs from "@/models/blog";
 import { NextRequest, NextResponse } from "next/server";
+import cloudinary from "@/lib/cloudinary"
+import { Readable } from "stream";
 
 //find  single blog id
 export async function GET(
@@ -11,9 +13,8 @@ export async function GET(
     const conn = await dbconnction();
     console.log("MongoDB connected:", conn?.connection?.readyState);
 
-    const { id } = params;
+    const { id } =  await  params;
     // console.log(id , "idddddddddddddddddddd")
-
     if (!id || typeof id !== "string") {
       return NextResponse.json(
         { success: false, message: "Invalid blog ID format" },
@@ -40,25 +41,52 @@ export async function GET(
   }
 }
 
-
-
 //update apis
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+
+export async function PUT(req: Request, { params }) {
   try {
-    const id = params.id;
-    const body = await req.json();
-    const updatedBlog = await Blogs.findOneAndUpdate({ blog_id: id }, body, {
-      new: true,
-    });
-    if (!updatedBlog) {
+    console.log(params , "id")
+    const id  =  params.id;
+    console.log(id)
+    const formData = await req.formData();
+
+    const title = formData.get("title");
+    const content = formData.get("content");
+    const tag = formData.get("tag");
+    const author = formData.get("author");
+    const imageFile = formData.get("image");
+    const existingBlog = await Blogs.findOne({ blog_id: id });
+    if (!existingBlog) {
       return NextResponse.json(
         { success: false, message: "Blog not found" },
         { status: 404 }
       );
     }
+    let imageUrl = existingBlog.image;
+    if (imageFile && typeof imageFile?.arrayBuffer === "function") {
+      if (existingBlog.image_public_id) {
+        await cloudinary.uploader.destroy(existingBlog.image_public_id);
+      }
+      const arrayBuffer = await imageFile?.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      imageUrl = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "blogs" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result?.secure_url);
+          }
+        );
+        Readable.from(buffer).pipe(stream);
+      });
+    }
+
+    const updatedBlog = await Blogs.findOneAndUpdate(
+      { blog_id: id },
+      { title, content, tag, author, image: imageUrl, createdAt: new Date() },
+      { new: true }
+    );
 
     return NextResponse.json({ success: true, blog: updatedBlog });
   } catch (error) {

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description: "Blogs apps.........",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -29,7 +29,7 @@ export default function RootLayout({
 
 
 
-  const cookieStore = cookies();
+  const cookieStore =  await cookies();
   const authToken = cookieStore.get("auth_token")?.value;
   const isLoggedIn = Boolean(authToken);
 
