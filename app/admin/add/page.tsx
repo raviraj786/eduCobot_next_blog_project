@@ -1,7 +1,10 @@
-import AddBlogCom from "@/components/AddBlogCom";
+import AddBlogCom from "@/components/AddBlogCom"
+
 
 function page() {
-  return <AddBlogCom />;
+  return (
+   <AddBlogCom/>
+  )
 }
 
-export default page;
+export default page

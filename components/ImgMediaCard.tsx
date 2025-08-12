@@ -8,7 +8,8 @@ import {
 } from "@mui/material";
 import DOMPurify from "dompurify";
 import Props from "@/types/index";
-import { format } from "date-fns";
+import { format, differenceInHours } from "date-fns";
+import { AccessTime, CalendarToday, Person } from "@mui/icons-material";
 
 export default function ImgMediaCard({
   id,
@@ -19,9 +20,17 @@ export default function ImgMediaCard({
   createdAt,
 }: Props) {
   const cleanContent = DOMPurify.sanitize(content || "");
-  const formattedDate = createdAt
-    ? format(new Date(createdAt), "MMMM d, yyyy • h:mm a")
-    : "Unknown Date";
+
+
+  const dateObj = new Date(createdAt);
+  const hoursAgo = differenceInHours(new Date(), dateObj);
+
+  let displayTime;
+  if (hoursAgo < 24) {
+    displayTime = `${hoursAgo} hours ago`;
+  } else {
+    displayTime = format(dateObj, "dd MMM yyyy, hh:mm a");
+  }
 
   return (
     <Card
@@ -35,21 +44,36 @@ export default function ImgMediaCard({
         overflow: "hidden",
         backgroundColor: "#ffffff",
         boxShadow: 4,
-        // margin removed here to prevent overflow
+        marginBottom: 8,
       }}
     >
-      <CardMedia
-        component="img"
-        alt={title}
-        height="300"
-        image={image || "/fallback.jpg"}
-        sx={{
+      <div
+        style={{
+          backgroundColor: "#000",
           width: "100%",
-          height: "300px",
-          objectFit: "cover",
-          objectPosition: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
         }}
-      />
+        className="h-[320px] sm:h-[250px] md:h-[300px] lg:h-[250px]"
+      >
+        <CardMedia
+          component="img"
+          alt={title}
+          image={image || "/fallback.jpg"}
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+            backgroundColor: "#000",
+          }}
+          onError={(e) => {
+            e.currentTarget.src = "/fallback.jpg";
+          }}
+        />
+      </div>
 
       <CardContent sx={{ px: 3, py: 2, flex: "1 1 auto" }}>
         <Typography
@@ -65,21 +89,23 @@ export default function ImgMediaCard({
             textOverflow: "ellipsis",
           }}
         >
-    {(title?.slice(0, 60) || "Untitled Blog")}
+          {title?.slice(0, 60) || "Untitled Blog"}
         </Typography>
 
         <Typography
-          style={{
-            maxHeight: "90px",
-            overflow: "auto",
+          component="div"
+          dangerouslySetInnerHTML={{
+            __html: cleanContent + "...",
+          }}
+          sx={{
             fontSize: "14px",
             color: "#444",
             fontFamily: "Georgia, serif",
             lineHeight: "1.5em",
+            maxHeight: "90px",
+            overflow: "hidden",
           }}
-        >
-          VIEW THESE RESOURCES
-        </Typography>
+        />
       </CardContent>
 
       <CardActionArea>
@@ -94,8 +120,10 @@ export default function ImgMediaCard({
               </span>
             ))}
           </div>
-
-          <p className="text-sm text-gray-600 font-serif">📅 {formattedDate}</p>
+          <div className=" flex items-center gap-1 ">
+            <AccessTime fontSize="small" />
+            <p className="text-sm text-gray-600 ">{displayTime}</p>
+          </div>
         </div>
       </CardActionArea>
     </Card>

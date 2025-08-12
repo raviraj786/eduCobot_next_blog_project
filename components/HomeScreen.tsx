@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
 import ImgMediaCard from "@/components/ImgMediaCard";
-import Loader from "@/components/Loader";
+import Overlay from "@/components/Overlay";
 import axios from "axios";
 import Blog from "@/types";
 import Link from "next/link";
@@ -12,41 +12,66 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<TabType>("latest");
   const [latestBlogs, setLatestBlogs] = useState<Blog[]>([]);
   const [recommendedBlogs, setRecommendedBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [alertMsg, setAlertMsg] = useState("");
+
+  const showAlert = (msg: string) => {
+    setAlertMsg(msg);
+  };
+
+  const closeAlert = () => {
+    setAlertMsg("");
+  };
+
+  const fetchLatestBlogs = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/blogs/latest?limit=6");
+      console.log(response.data);
+      if (response.data?.blogs?.length > 0) {
+        setLatestBlogs(response.data.blogs);
+      } else {
+        showAlert("No latest blogs found.");
+      }
+    } catch (error) {
+      console.error("Error loading latest blogs", error);
+      showAlert("Failed to fetch latest blogs. Try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecommendedBlogs = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/blogs/recommended?limit=6");
+
+      if (response.data?.blogs?.length > 0) {
+        setRecommendedBlogs(response.data.blogs);
+      } else {
+        showAlert("No recommended blogs found.");
+      }
+    } catch (error) {
+      console.error("Error loading recommended blogs", error);
+      showAlert("Failed to fetch recommended blogs. Try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const startTime = Date.now();
-        const response = await axios.get("/api/blogs/latest?limit=6");
-        const elapsed = Date.now() - startTime;
-        const delay = Math.max(1500 - elapsed, 0);
-
-        setTimeout(() => {
-          if (response.data?.blogs?.length > 0) {
-            setLatestBlogs(response.data.blogs);
-          } else {
-            setErrorMsg("No blogs found.");
-          }
-          setLoading(false);
-        }, delay);
-      } catch (error: any) {
-        console.error("Error loading blogs", error);
-        setErrorMsg("Failed to fetch blogs. Try again later.");
-        setLoading(false);
-      }
-    };
-
-    fetchBlogs();
-  }, []);
-
-  if (loading) return <Loader />;
-  if (errorMsg)
-    return <div className="text-red-500 text-center">{errorMsg}</div>;
+    if (activeTab === "latest") {
+      fetchLatestBlogs();
+    } else {
+      fetchRecommendedBlogs();
+    }
+  }, [activeTab]);
 
   return (
-    <div className="flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-10 space-y-16">
+    <div className="flex flex-col items-center justify-center px-4 md:px-8 lg:px-16 py-10 space-y-16 relative">
+      {loading && <Overlay type="loader" />}
+      {alertMsg && <Overlay type="alert" msg={alertMsg} onClose={closeAlert} />}
+
       <div className="w-full max-w-7xl">
         <div className="flex gap-4 mb-6">
           <span
@@ -71,12 +96,12 @@ export default function HomeScreen() {
           </span>
         </div>
 
-        <Suspense fallback={<Loader />}>
-          {activeTab === "latest" && (
-            <section className="text-left">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {latestBlogs?.length > 0 ? (
-                  latestBlogs.map((blog) => (
+        <Suspense fallback={<Overlay type="loader" />}>
+          {activeTab === "latest" ? (
+            latestBlogs.length > 0 ? (
+              <section className="text-left">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {latestBlogs.map((blog) => (
                     <Link
                       href={`/blogs/${blog.blog_id}`}
                       key={blog.blog_id}
@@ -87,47 +112,40 @@ export default function HomeScreen() {
                         content={blog.content}
                         image={blog.image}
                         tag={blog.tag}
-                        createdAt={blog.createdAt}
+                        createdAt={blog.updatedAt}
                       />
                     </Link>
-                  ))
-                ) : (
-                  <p className="col-span-3 text-center text-gray-500">
-                    No blogs found.
-                  </p>
-                )}
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <section>
+                <div>No blogs found.</div>
+              </section>
+            )
+          ) : recommendedBlogs.length > 0 ? (
+            <section className="text-left">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {recommendedBlogs.map((blog) => (
+                  <Link
+                    href={`/blogs/${blog.blog_id}`}
+                    key={blog._id}
+                    className="block hover:opacity-90 transition"
+                  >
+                    <ImgMediaCard
+                      title={blog?.title}
+                      content={blog?.content}
+                      image={blog?.image}
+                      tag={blog?.tag}
+                      createdAt={blog?.updatedAt}
+                    />
+                  </Link>
+                ))}
               </div>
             </section>
-          )}
-
-          {activeTab === "recommended" && (
-            <section className="text-left">
-              <h2 className="text-2xl font-semibold text-cyan-900 mb-8">
-                Recommended Blogs
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {recommendedBlogs?.length > 0 ? (
-                  recommendedBlogs.map((blog) => (
-                    <Link
-                      href={`/blogs/${blog.blog_id}`}
-                      key={blog._id}
-                      className="block hover:opacity-90 transition"
-                    >
-                      <ImgMediaCard
-                        title={blog.title}
-                        content={blog.content}
-                        image={blog.image}
-                        tag={blog.tag}
-                        createdAt={blog.createdAt}
-                      />
-                    </Link>
-                  ))
-                ) : (
-                  <p className="col-span-3 text-center text-gray-500">
-                    No recommended blogs.
-                  </p>
-                )}
-              </div>
+          ) : (
+            <section>
+              <div>No blogs found.</div>
             </section>
           )}
         </Suspense>

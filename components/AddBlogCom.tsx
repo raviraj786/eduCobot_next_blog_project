@@ -30,17 +30,16 @@ export default function AddBlogCom() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [ alertBox , setAlertBox ] = useState(false)
+  const [alert, setAlert] = useState<{ msg: string; type: AlertType } | null>(
+    null
+  );
 
+  const showAlert = (msg: string, type: AlertType = "info") => {
+    setAlert({ msg, type });
+  };
 
+  const closeAlert = () => setAlert(null);
 
-
-
-  if(alertBox){
-    <AlertBox  msg={"Blog created successfully!"} />
-  }
-
-  // Validation errors (inline)
   const [errors, setErrors] = useState({
     title: "",
     authorName: "",
@@ -174,14 +173,14 @@ export default function AddBlogCom() {
           });
 
       if (res.data?.success) {
-        console.log(res.data, "data......");
-        setAlertBox(true)
         // ("Blog created successfully!");
-        router.push("/admin");
-        showToast(
-          blogId ? "Blog created successfully!" : "Blog created successfully!",
+        console.log(res.data)
+        showAlert(
+        "Blog created successfully!",
           "success"
         );
+          // router.push("/admin");
+
         if (!blogId) resetForm();
       } else {
         showToast(res.data?.message || "Failed to save blog.", "error");
@@ -231,7 +230,7 @@ export default function AddBlogCom() {
           <input
             id="title"
             type="text"
-            className={`w-full p-3 border rounded mb-3 ${
+            className={`w-full p-3 border rounded mb-3  capitalize  ${
               errors.title ? "border-red-500" : "border-gray-300"
             }`}
             placeholder="Enter blog title"
@@ -247,7 +246,10 @@ export default function AddBlogCom() {
             </p>
           )}
 
-          <label className="block mb-2 font-medium" htmlFor="authorName">
+          <label
+            className="block mb-2 font-medium capitalize"
+            htmlFor="authorName"
+          >
             Author Name <span className="text-red-600">*</span>
           </label>
           <input
