@@ -49,7 +49,6 @@ export async function PUT(req: Request, { params }) {
     const id  =  params.id;
     console.log(id)
     const formData = await req.formData();
-
     const title = formData.get("title");
     const content = formData.get("content");
     const tag = formData.get("tag");
@@ -109,18 +108,14 @@ export async function DELETE(
   try {
     await dbconnction();
     const { id } = params;
-
     console.log(id, "is");
-
     const deleted = await Blogs.findOneAndDelete({ blog_id: id });
-
     if (!deleted) {
       return NextResponse.json(
         { success: false, message: "Blog not found" },
         { status: 404 }
       );
     }
-
     return NextResponse.json(
       { success: true, message: "Blog deleted successfully" },
       { status: 200 }

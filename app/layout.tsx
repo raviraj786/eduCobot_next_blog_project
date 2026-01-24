@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduCOBOT",
-  description: "Blogs apps.........",
+  title: "inkwell",
+  description: "Professional Blogging Platform",
 };
 
 export default async function RootLayout({
@@ -26,22 +26,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-
-
-  const cookieStore =  await cookies();
+  const cookieStore = await cookies();
   const authToken = cookieStore.get("auth_token")?.value;
   const isLoggedIn = Boolean(authToken);
-
-
-
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider initialIsLoggedIn={isLoggedIn} >
+        <AuthProvider initialIsLoggedIn={isLoggedIn}>
           <Header />
           <div className="min-h-screen">{children}</div>
           <Footer />

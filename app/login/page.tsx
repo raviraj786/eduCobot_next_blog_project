@@ -9,10 +9,9 @@ export default function LoginPage() {
   const { isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
   const [admin, setAdmin] = useState({ email: "", password: "" });
 
- 
   useEffect(() => {
     if (isLoggedIn) {
-      router.replace("/admin"); 
+      router.replace("/admin");
     }
   }, [isLoggedIn, router]);
 
@@ -68,6 +67,13 @@ export default function LoginPage() {
             className="w-full py-2 px-4 bg-blue-950 text-white rounded"
           >
             Sign In
+          </button>
+
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-blue-950 text-white rounded"
+          >
+            Sign up
           </button>
         </form>
       </div>

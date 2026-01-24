@@ -5,11 +5,13 @@ import {
   CardMedia,
   Typography,
   CardActionArea,
+  Box,
 } from "@mui/material";
 import DOMPurify from "dompurify";
 import Props from "@/types/index";
 import { format, differenceInHours } from "date-fns";
 import { AccessTime, CalendarToday, Person } from "@mui/icons-material";
+import Image from "next/image";
 
 export default function ImgMediaCard({
   id,
@@ -20,7 +22,6 @@ export default function ImgMediaCard({
   createdAt,
 }: Props) {
   const cleanContent = DOMPurify.sanitize(content || "");
-
 
   const dateObj = new Date(createdAt);
   const hoursAgo = differenceInHours(new Date(), dateObj);
@@ -58,21 +59,22 @@ export default function ImgMediaCard({
         }}
         className="h-[320px] sm:h-[250px] md:h-[300px] lg:h-[250px]"
       >
-        <CardMedia
-          component="img"
-          alt={title}
-          image={image || "/fallback.jpg"}
-          sx={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center",
-            backgroundColor: "#000",
-          }}
-          onError={(e) => {
-            e.currentTarget.src = "/fallback.jpg";
-          }}
-        />
+        <Box sx={{ position: "relative", width: "100%", height: 250 }}>
+          <Image
+            src={image || "/fallback.jpg"}
+            alt={title}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 33vw"
+            style={{
+              objectFit: "cover",
+              objectPosition: "center",
+            }}
+            onError={(e) => {
+              e.currentTarget.src = "/fallback.jpg";
+            }}
+          />
+        </Box>
       </div>
 
       <CardContent sx={{ px: 3, py: 2, flex: "1 1 auto" }}>
@@ -94,18 +96,21 @@ export default function ImgMediaCard({
 
         <Typography
           component="div"
-          dangerouslySetInnerHTML={{
-            __html: cleanContent + "...",
-          }}
+          // dangerouslySetInnerHTML={{
+          //   __html: cleanContent.substring(0,10) + "...",
+          // }}
+
           sx={{
             fontSize: "14px",
             color: "#444",
             fontFamily: "Georgia, serif",
             lineHeight: "1.5em",
-            maxHeight: "90px",
+            maxHeight: "50px",
             overflow: "hidden",
           }}
-        />
+        >
+          {"View More.."}
+        </Typography>
       </CardContent>
 
       <CardActionArea>

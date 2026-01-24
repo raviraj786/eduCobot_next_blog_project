@@ -1,18 +1,16 @@
 import mongoose, { Document, Schema, model, models } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
-
 export interface IBlog extends Document {
   blog_id: string;
   title: string;
   content: string;
   image?: string;
   tag?: string[];
-  authorName: string; 
+  authorName: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
-
 
 const BlogSchema: Schema<IBlog> = new Schema(
   {
@@ -46,7 +44,6 @@ const BlogSchema: Schema<IBlog> = new Schema(
     timestamps: true,
   }
 );
-
 
 const Blog = models.Blog || model<IBlog>("Blog", BlogSchema);
 

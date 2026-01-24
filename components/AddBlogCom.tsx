@@ -174,12 +174,8 @@ export default function AddBlogCom() {
 
       if (res.data?.success) {
         // ("Blog created successfully!");
-        console.log(res.data)
-        showAlert(
-        "Blog created successfully!",
-          "success"
-        );
-          // router.push("/admin");
+        // alert("Blog created successfully!");
+        router.push("/admin");
 
         if (!blogId) resetForm();
       } else {

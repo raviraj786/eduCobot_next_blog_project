@@ -1,66 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import React, { useContext } from "react";
-import { useRouter } from "next/navigation";
-import { AuthContext } from "@/context/AuthContext";
+import React from "react";
 
 export default function Header() {
-  const { isLoggedIn, setIsLoggedIn } = useContext(AuthContext);
-  const router = useRouter();
-
-  console.log(isLoggedIn, "Dddddddddddddd");
-
-  async function handleLogout() {
-    await fetch("/api/logout", { method: "POST" });
-    setIsLoggedIn(false);
-    router.push("/login");
-  }
-
   return (
-    <header className="bg-blue-950 text-white shadow-md sticky top-0 z-50">
-      <div className="max-w-screen-xl mx-auto flex flex-col md:flex-row items-center justify-between px-4 py-4 gap-4 md:gap-0">
-        <div className="flex flex-wrap justify-center md:justify-start items-center gap-6">
-          <Link
-            href="/"
-            className="text-2xl font-bold font-serif tracking-wide"
-          >
-            eduCOBOT
+    <header className="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-400 text-black rounded-full flex items-center justify-center font-bold text-xl">
+            I
+          </div>
+          <Link href="/" className="text-2xl font-bold tracking-wide">
+            Inkwell
+          </Link>
+          <span className="text-sm text-slate-300 hidden md:block">
+            Professional Blogging Platform
+          </span>
+        </div>
+
+        <nav className="flex gap-4 md:gap-6 ml-2  text-sm font-medium items-center ">
+          <Link href="/blogs" className="hover:text-amber-400 transition ">
+            Blogs
           </Link>
 
-          <nav className="flex gap-4 text-base font-medium">
-            {/* <Link href="/" className="hover:text-amber-400 transition">
-              All
-            </Link> */}
-            <Link href="/blogs" className="hover:text-amber-400 transition">
-              Blogs
-            </Link>
+          <Link href="/about" className="hover:text-amber-400 transition">
+            About
+          </Link>
 
-            {isLoggedIn && (
-              <Link href="/admin" className="hover:text-amber-400 transition">
-                Dashboard
-              </Link>
-            )}
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {isLoggedIn ? (
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded transition"
-            >
-              Logout
-            </button>
-          ) : (
-            <Link
-              href="/login"
-              className="bg-amber-400 hover:bg-amber-500 text-black font-semibold px-4 py-2 rounded transition"
-            >
-              Account
-            </Link>
-          )}
-        </div>
+          <Link
+            href="/admin"
+            className="px-4 py-2 rounded-md bg-amber-400 text-black font-semibold hover:bg-amber-500 transition"
+          >
+            Publish Your Blog
+          </Link>
+        </nav>
       </div>
     </header>
   );
